@@ -64,7 +64,7 @@ export async function POST(
     const completedQuestions: number[] = session.completed_questions || [];
     const incorrectQuestions: number[] = session.incorrect_questions || [];
     
-    let newCompletedQuestions = [...completedQuestions];
+    const newCompletedQuestions = [...completedQuestions];
     let newIncorrectQuestions = [...incorrectQuestions];
     let newCorrectCount = session.correct_count;
     let newIncorrectCount = session.incorrect_count;
@@ -155,7 +155,6 @@ function getNextQuestionIndex(
   totalQuestions: number
 ): number {
   const completedSet = new Set(completedQuestions);
-  const incorrectSet = new Set(incorrectQuestions);
 
   // First pass: go through questions sequentially
   if (currentIndex < totalQuestions) {
@@ -184,7 +183,7 @@ function getNextQuestionIndex(
   return -1; // No more questions
 }
 
-function formatQuestion(dbQuestion: any, questionIndex: number) {
+function formatQuestion(dbQuestion: { id: string; full_sentence: string; target_word: string; prompt: string; alternate_answers: string | null; hint: string | null; grammar_concept: string }, questionIndex: number) {
   const blankSentence = dbQuestion.full_sentence.replace(dbQuestion.target_word, '_____');
   
   return {

@@ -39,7 +39,7 @@ export async function POST(
     const completedQuestions: number[] = session.completed_questions || [];
     const incorrectQuestions: number[] = session.incorrect_questions || [];
     
-    let newCompletedQuestions = [...completedQuestions];
+    const newCompletedQuestions = [...completedQuestions];
     let newIncorrectQuestions = [...incorrectQuestions];
     let newCorrectCount = session.correct_count;
 

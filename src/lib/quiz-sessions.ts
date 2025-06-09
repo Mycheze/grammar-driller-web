@@ -1,19 +1,25 @@
 // Simple in-memory session storage
 // Works because Next.js keeps this in memory during development
-const sessions = new Map<string, any>();
 
-export function createSession(sessionId: string, data: any) {
+interface SessionData {
+  createdAt: number;
+  [key: string]: unknown;
+}
+
+const sessions = new Map<string, SessionData>();
+
+export function createSession(sessionId: string, data: Record<string, unknown>) {
   sessions.set(sessionId, {
     ...data,
     createdAt: Date.now()
   });
 }
 
-export function getSession(sessionId: string) {
+export function getSession(sessionId: string): SessionData | null {
   return sessions.get(sessionId) || null;
 }
 
-export function updateSession(sessionId: string, updates: any) {
+export function updateSession(sessionId: string, updates: Record<string, unknown>) {
   const session = sessions.get(sessionId);
   if (session) {
     sessions.set(sessionId, { ...session, ...updates });

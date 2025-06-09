@@ -48,7 +48,9 @@ export default function QuizPage() {
     incorrectAnswers: new Set(),
     questionOrder: [],
     firstRoundComplete: false,
-    lastShownQuestionIndex: null
+    lastShownQuestionIndex: null,
+    totalQuestionsAnswered: 0,
+    totalCorrectResponses: 0
   });
   
   const [userAnswer, setUserAnswer] = useState('');
