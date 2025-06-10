@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import ExplanationModal from '@/components/ExplanationModal';
 
@@ -65,27 +65,7 @@ export default function QuizPage() {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [showExplanationModal, setShowExplanationModal] = useState(false);
 
-  useEffect(() => {
-    startQuiz();
-  }, [drillId]);
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter') {
-        if (showResult) {
-          nextQuestion();
-        } else if (userAnswer.trim()) {
-          submitAnswer();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showResult, userAnswer]);
-
-  const startQuiz = async () => {
+  const startQuiz = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -129,9 +109,65 @@ export default function QuizPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [drillId]);
 
-  const getCurrentQuestion = (): QuizQuestion | null => {
+  useEffect(() => {
+    startQuiz();
+  }, [startQuiz]);
+
+  const getNextSmartQuestionIndex = useCallback((state: QuizState, totalQuestions: number): number => {
+    const incorrectQuestionIndices = Array.from(state.incorrectAnswers);
+    const unansweredQuestionIndices = Array.from({ length: totalQuestions }, (_, i) => i)
+      .filter(i => !state.correctAnswers.has(i) && !state.incorrectAnswers.has(i));
+    const correctQuestionIndices = Array.from(state.correctAnswers);
+
+    let candidateQuestionIndices: number[];
+
+    if (unansweredQuestionIndices.length > 0) {
+      // Still have unanswered questions - prioritize them + incorrect
+      candidateQuestionIndices = [...incorrectQuestionIndices, ...unansweredQuestionIndices];
+    } else if (incorrectQuestionIndices.length > 0) {
+      // Only incorrect questions remain - mix with correct questions for extra practice
+      // 60% chance of incorrect question, 40% chance of correct question for variety
+      const useIncorrect = Math.random() < 0.6;
+      
+      if (useIncorrect) {
+        candidateQuestionIndices = incorrectQuestionIndices;
+      } else {
+        // Mix in correct questions for practice
+        candidateQuestionIndices = [...incorrectQuestionIndices, ...correctQuestionIndices];
+      }
+    } else {
+      // All questions answered correctly - quiz should complete
+      return -1;
+    }
+
+    // CRITICAL: Prevent back-to-back repetition
+    if (state.lastShownQuestionIndex !== null) {
+      candidateQuestionIndices = candidateQuestionIndices.filter(idx => idx !== state.lastShownQuestionIndex);
+    }
+
+    // If we filtered out everything (e.g., only one question left), allow it to prevent infinite loop
+    if (candidateQuestionIndices.length === 0) {
+      if (incorrectQuestionIndices.length > 0) {
+        candidateQuestionIndices = incorrectQuestionIndices;
+      } else if (unansweredQuestionIndices.length > 0) {
+        candidateQuestionIndices = unansweredQuestionIndices;
+      } else {
+        return -1; // No questions available
+      }
+    }
+
+    // Select randomly from candidates
+    const randomIndex = Math.floor(Math.random() * candidateQuestionIndices.length);
+    const selectedQuestionIndex = candidateQuestionIndices[randomIndex];
+    
+    // Convert question index to position in shuffled order
+    const positionInOrder = state.questionOrder.indexOf(selectedQuestionIndex);
+    return positionInOrder !== -1 ? positionInOrder : -1;
+  }, []);
+
+  const getCurrentQuestion = useCallback((): QuizQuestion | null => {
     if (!questions.length || quizCompleted) return null;
     
     const { questionOrder, currentQuestionIndex } = quizState;
@@ -142,9 +178,31 @@ export default function QuizPage() {
     }
     
     return null;
-  };
+  }, [questions, quizCompleted, quizState]);
 
-  const submitAnswer = () => {
+  const saveResultsWithValues = useCallback(async (correctAnswers: Set<number>, incorrectAnswers: Set<number>) => {
+    if (!sessionId) return;
+
+    try {
+      await fetch(`/api/quiz/${drillId}/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          results: {
+            correctCount: correctAnswers.size,
+            incorrectCount: incorrectAnswers.size,
+            completedQuestions: Array.from(correctAnswers),
+            incorrectQuestions: Array.from(incorrectAnswers)
+          }
+        })
+      });
+    } catch (error) {
+      console.error('Error saving results:', error);
+    }
+  }, [sessionId, drillId]);
+
+  const submitAnswer = useCallback(() => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion || !userAnswer.trim()) return;
 
@@ -195,39 +253,9 @@ export default function QuizPage() {
     });
     
     setShowResult(true);
-  };
+  }, [getCurrentQuestion, userAnswer, questions.length, quizState.correctAnswers, quizState.incorrectAnswers, saveResultsWithValues]);
 
-  const overrideAnswer = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion || !lastResult) return;
-
-    // Calculate new state values
-    const newCorrectAnswers = new Set(quizState.correctAnswers);
-    const newIncorrectAnswers = new Set(quizState.incorrectAnswers);
-    
-    newCorrectAnswers.add(currentQuestion.questionIndex);
-    newIncorrectAnswers.delete(currentQuestion.questionIndex);
-
-    // Check completion
-    const isCompleted = newCorrectAnswers.size >= questions.length && newIncorrectAnswers.size === 0;
-    
-    if (isCompleted) {
-      setQuizCompleted(true);
-      saveResultsWithValues(newCorrectAnswers, newIncorrectAnswers);
-    }
-
-    // Update state
-    setQuizState(prev => ({
-      ...prev,
-      correctAnswers: newCorrectAnswers,
-      incorrectAnswers: newIncorrectAnswers,
-      totalCorrectResponses: prev.totalCorrectResponses + 1 // Override counts as a correct response
-    }));
-
-    setLastResult({ ...lastResult, correct: true });
-  };
-
-  const nextQuestion = () => {
+  const nextQuestion = useCallback(() => {
     if (quizCompleted) {
       return;
     }
@@ -267,80 +295,52 @@ export default function QuizPage() {
       const input = document.getElementById('answer') as HTMLInputElement;
       input?.focus();
     }, 100);
-  };
+  }, [quizCompleted, getNextSmartQuestionIndex, questions.length, saveResultsWithValues]);
 
-  const getNextSmartQuestionIndex = (state: QuizState, totalQuestions: number): number => {
-    const incorrectQuestionIndices = Array.from(state.incorrectAnswers);
-    const unansweredQuestionIndices = Array.from({ length: totalQuestions }, (_, i) => i)
-      .filter(i => !state.correctAnswers.has(i) && !state.incorrectAnswers.has(i));
-    const correctQuestionIndices = Array.from(state.correctAnswers);
-
-    let candidateQuestionIndices: number[];
-
-    if (unansweredQuestionIndices.length > 0) {
-      // Still have unanswered questions - prioritize them + incorrect
-      candidateQuestionIndices = [...incorrectQuestionIndices, ...unansweredQuestionIndices];
-    } else if (incorrectQuestionIndices.length > 0) {
-      // Only incorrect questions remain - mix with correct questions for extra practice
-      // 60% chance of incorrect question, 40% chance of correct question for variety
-      const useIncorrect = Math.random() < 0.6;
-      
-      if (useIncorrect) {
-        candidateQuestionIndices = incorrectQuestionIndices;
-      } else {
-        // Mix in correct questions for practice
-        candidateQuestionIndices = [...incorrectQuestionIndices, ...correctQuestionIndices];
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        if (showResult) {
+          nextQuestion();
+        } else if (userAnswer.trim()) {
+          submitAnswer();
+        }
       }
-    } else {
-      // All questions answered correctly - quiz should complete
-      return -1;
-    }
+    };
 
-    // CRITICAL: Prevent back-to-back repetition
-    if (state.lastShownQuestionIndex !== null) {
-      candidateQuestionIndices = candidateQuestionIndices.filter(idx => idx !== state.lastShownQuestionIndex);
-    }
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showResult, userAnswer, nextQuestion, submitAnswer]);
 
-    // If we filtered out everything (e.g., only one question left), allow it to prevent infinite loop
-    if (candidateQuestionIndices.length === 0) {
-      if (incorrectQuestionIndices.length > 0) {
-        candidateQuestionIndices = incorrectQuestionIndices;
-      } else if (unansweredQuestionIndices.length > 0) {
-        candidateQuestionIndices = unansweredQuestionIndices;
-      } else {
-        return -1; // No questions available
-      }
-    }
+  const overrideAnswer = () => {
+    const currentQuestion = getCurrentQuestion();
+    if (!currentQuestion || !lastResult) return;
 
-    // Select randomly from candidates
-    const randomIndex = Math.floor(Math.random() * candidateQuestionIndices.length);
-    const selectedQuestionIndex = candidateQuestionIndices[randomIndex];
+    // Calculate new state values
+    const newCorrectAnswers = new Set(quizState.correctAnswers);
+    const newIncorrectAnswers = new Set(quizState.incorrectAnswers);
     
-    // Convert question index to position in shuffled order
-    const positionInOrder = state.questionOrder.indexOf(selectedQuestionIndex);
-    return positionInOrder !== -1 ? positionInOrder : -1;
-  };
+    newCorrectAnswers.add(currentQuestion.questionIndex);
+    newIncorrectAnswers.delete(currentQuestion.questionIndex);
 
-  const saveResultsWithValues = async (correctAnswers: Set<number>, incorrectAnswers: Set<number>) => {
-    if (!sessionId) return;
-
-    try {
-      await fetch(`/api/quiz/${drillId}/save`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sessionId,
-          results: {
-            correctCount: correctAnswers.size,
-            incorrectCount: incorrectAnswers.size,
-            completedQuestions: Array.from(correctAnswers),
-            incorrectQuestions: Array.from(incorrectAnswers)
-          }
-        })
-      });
-    } catch (error) {
-      console.error('Error saving results:', error);
+    // Check completion
+    const isCompleted = newCorrectAnswers.size >= questions.length && newIncorrectAnswers.size === 0;
+    
+    if (isCompleted) {
+      setQuizCompleted(true);
+      saveResultsWithValues(newCorrectAnswers, newIncorrectAnswers);
     }
+
+    // Update state
+    setQuizState(prev => ({
+      ...prev,
+      correctAnswers: newCorrectAnswers,
+      incorrectAnswers: newIncorrectAnswers,
+      totalCorrectResponses: prev.totalCorrectResponses + 1 // Override counts as a correct response
+    }));
+
+    setLastResult({ ...lastResult, correct: true });
   };
 
   const getProgress = () => {

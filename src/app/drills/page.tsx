@@ -106,170 +106,214 @@ export default function DrillsPage() {
     fetchAllDrillFiles();
   };
 
+  const getDifficultyClass = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'difficulty-beginner';
+      case 'Intermediate': return 'difficulty-intermediate';
+      case 'Advanced': return 'difficulty-advanced';
+      case 'Expert': return 'difficulty-expert';
+      default: return 'difficulty-intermediate';
+    }
+  };
+
   // Only show loading screen on initial data load
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="text-lg">Loading drill files...</div>
+      <div className="text-center py-16">
+        <div className="loading-spinner mx-auto mb-4"></div>
+        <div className="text-lg loading-pulse">Loading drill files...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <div className="text-destructive mb-4">Error: {error}</div>
-        <button
-          onClick={fetchAllDrillFiles}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-        >
-          Try Again
-        </button>
-        <div className="mt-4">
-          <Link
-            href="/drills/upload"
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
-          >
-            Upload New Drill Instead
-          </Link>
+      <div className="text-center py-16">
+        <div className="enhanced-card max-w-md mx-auto">
+          <div className="text-destructive mb-4 text-lg font-medium">⚠️ Error</div>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={fetchAllDrillFiles}
+              className="btn-primary w-full"
+            >
+              Try Again
+            </button>
+            <Link
+              href="/drills/upload"
+              className="btn-secondary block text-center w-full"
+            >
+              Upload New Drill Instead
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">Grammar Drills</h1>
-        <div className="flex gap-2">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-4">
+        <h1 className="text-4xl font-bold gradient-text">Grammar Drills</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Master grammar concepts with AI-powered interactive exercises
+        </p>
+        <div className="flex justify-center gap-3 flex-wrap">
           <button
             onClick={() => setShowGenerateModal(true)}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="btn-primary animate-glow"
           >
-            Generate with AI
+            ✨ Generate with AI
           </button>
           <Link
             href="/drills/upload"
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+            className="btn-secondary"
           >
-            Upload File
+            📁 Upload File
           </Link>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted rounded-lg">
-        <div>
-          <label htmlFor="search" className="block text-sm font-medium mb-1">
-            Search
-          </label>
-          <input
-            id="search"
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search drills..."
-            className="w-full px-3 py-2 border border-border rounded-md bg-background"
-          />
-        </div>
+      <div className="enhanced-card">
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          🔍 Find Your Perfect Drill
+          <div className="ml-2 w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label htmlFor="search" className="block text-sm font-medium mb-2">
+              Search
+            </label>
+            <input
+              id="search"
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search drills..."
+              className="enhanced-input w-full"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="language" className="block text-sm font-medium mb-1">
-            Language
-          </label>
-          <select
-            id="language"
-            value={languageFilter}
-            onChange={(e) => setLanguageFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background"
-          >
-            <option value="">All Languages</option>
-            {languages.map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label htmlFor="language" className="block text-sm font-medium mb-2">
+              Language
+            </label>
+            <select
+              id="language"
+              value={languageFilter}
+              onChange={(e) => setLanguageFilter(e.target.value)}
+              className="enhanced-input w-full"
+            >
+              <option value="">All Languages</option>
+              {languages.map(lang => (
+                <option key={lang} value={lang}>{lang}</option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label htmlFor="difficulty" className="block text-sm font-medium mb-1">
-            Difficulty
-          </label>
-          <select
-            id="difficulty"
-            value={difficultyFilter}
-            onChange={(e) => setDifficultyFilter(e.target.value)}
-            className="w-full px-3 py-2 border border-border rounded-md bg-background"
-          >
-            <option value="">All Difficulties</option>
-            {difficulties.map(diff => (
-              <option key={diff} value={diff}>{diff}</option>
-            ))}
-          </select>
-        </div>
+          <div>
+            <label htmlFor="difficulty" className="block text-sm font-medium mb-2">
+              Difficulty
+            </label>
+            <select
+              id="difficulty"
+              value={difficultyFilter}
+              onChange={(e) => setDifficultyFilter(e.target.value)}
+              className="enhanced-input w-full"
+            >
+              <option value="">All Difficulties</option>
+              {difficulties.map(diff => (
+                <option key={diff} value={diff}>{diff}</option>
+              ))}
+            </select>
+          </div>
 
-        <div className="flex items-end">
-          <button
-            onClick={clearFilters}
-            className="px-4 py-2 text-sm border border-border rounded-md hover:bg-muted/50"
-          >
-            Clear Filters
-          </button>
+          <div className="flex items-end">
+            <button
+              onClick={clearFilters}
+              className="btn-secondary w-full"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Results Summary */}
+      <div className="text-center">
+        <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full glass-effect">
+          <span className="text-sm text-muted-foreground">
+            {searchTerm || languageFilter || difficultyFilter ? (
+              <>Showing {filteredDrillFiles.length} of {allDrillFiles.length} drill files</>
+            ) : (
+              <>Showing {allDrillFiles.length} drill file{allDrillFiles.length !== 1 ? 's' : ''}</>
+            )}
+          </span>
+          <div className="w-1 h-1 bg-primary rounded-full animate-pulse"></div>
         </div>
       </div>
 
       {/* Drill Files Grid */}
       {filteredDrillFiles.length === 0 ? (
-        <div className="text-center py-12 bg-muted rounded-lg">
-          <h3 className="text-lg font-medium mb-2">No drill files found</h3>
-          <p className="text-muted-foreground mb-4">
-            {searchTerm || languageFilter || difficultyFilter
-              ? `No drills match your current filters. Try adjusting your search criteria.`
-              : 'Get started by generating a drill with AI or uploading your own file'
-            }
-          </p>
-          {searchTerm || languageFilter || difficultyFilter ? (
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 mr-2"
-            >
-              Clear Filters
-            </button>
-          ) : null}
-          <div className="space-x-2">
-            <button
-              onClick={() => setShowGenerateModal(true)}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-            >
-              Generate with AI
-            </button>
-            <Link
-              href="/drills/upload"
-              className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
-            >
-              Upload File
-            </Link>
+        <div className="text-center py-16">
+          <div className="enhanced-card max-w-lg mx-auto">
+            <div className="text-6xl mb-4 animate-float">🤔</div>
+            <h3 className="text-xl font-semibold mb-3">No drill files found</h3>
+            <p className="text-muted-foreground mb-6">
+              {searchTerm || languageFilter || difficultyFilter
+                ? `No drills match your current filters. Try adjusting your search criteria.`
+                : 'Get started by generating a drill with AI or uploading your own file'
+              }
+            </p>
+            {searchTerm || languageFilter || difficultyFilter ? (
+              <button
+                onClick={clearFilters}
+                className="btn-secondary mr-3"
+              >
+                Clear Filters
+              </button>
+            ) : null}
+            <div className="space-x-3">
+              <button
+                onClick={() => setShowGenerateModal(true)}
+                className="btn-primary"
+              >
+                ✨ Generate with AI
+              </button>
+              <Link
+                href="/drills/upload"
+                className="btn-secondary"
+              >
+                📁 Upload File
+              </Link>
+            </div>
           </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredDrillFiles.map((drillFile) => (
+          {filteredDrillFiles.map((drillFile, index) => (
             <div
               key={drillFile.id}
-              className="border border-border rounded-lg p-6 hover:shadow-lg transition-shadow"
+              className="enhanced-card group"
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg">{drillFile.title}</h3>
+                  <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+                    {drillFile.title}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     by {drillFile.author}
                   </p>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
+                  <span className="tag">
                     {drillFile.target_language}
                   </span>
-                  <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">
+                  <span className={getDifficultyClass(drillFile.difficulty)}>
                     {drillFile.difficulty}
                   </span>
                 </div>
@@ -278,22 +322,24 @@ export default function DrillsPage() {
                   {drillFile.description}
                 </p>
 
-                <div className="text-xs text-muted-foreground">
-                  {drillFile.question_count} questions • {drillFile.grammar_concept}
+                <div className="text-xs text-muted-foreground flex items-center justify-between">
+                  <span>{drillFile.question_count} questions</span>
+                  <span>•</span>
+                  <span>{drillFile.grammar_concept}</span>
                 </div>
 
                 <div className="flex gap-2 pt-2">
                   <Link
                     href={`/quiz/${drillFile.id}`}
-                    className="flex-1 px-3 py-2 bg-primary text-primary-foreground text-sm text-center rounded-md hover:bg-primary/90"
+                    className="btn-primary flex-1 text-center text-sm"
                   >
-                    Start Quiz
+                    🚀 Start Quiz
                   </Link>
                   <Link
                     href={`/drills/${drillFile.id}`}
-                    className="px-3 py-2 border border-border text-sm rounded-md hover:bg-muted/50"
+                    className="btn-secondary px-4 text-sm"
                   >
-                    Details
+                    📋 Details
                   </Link>
                 </div>
               </div>
@@ -301,15 +347,6 @@ export default function DrillsPage() {
           ))}
         </div>
       )}
-
-      {/* Results info */}
-      <div className="text-xs text-muted-foreground text-center">
-        {searchTerm || languageFilter || difficultyFilter ? (
-          <>Showing {filteredDrillFiles.length} of {allDrillFiles.length} drill files</>
-        ) : (
-          <>Showing {allDrillFiles.length} drill file{allDrillFiles.length !== 1 ? 's' : ''}</>
-        )}
-      </div>
 
       {/* Generate Modal */}
       <GenerateDrillModal

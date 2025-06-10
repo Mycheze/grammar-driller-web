@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface ExplanationModalProps {
   isOpen: boolean;
@@ -28,13 +28,7 @@ export default function ExplanationModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    if (isOpen && !explanation) {
-      generateExplanation();
-    }
-  }, [isOpen]);
-
-  const generateExplanation = async () => {
+  const generateExplanation = useCallback(async () => {
     setLoading(true);
     setError('');
 
@@ -67,7 +61,13 @@ export default function ExplanationModal({
     } finally {
       setLoading(false);
     }
-  };
+  }, [drillId, question.blankSentence, question.targetWord, question.grammarConcept, question.fullSentence, userAnswer, targetLanguage]);
+
+  useEffect(() => {
+    if (isOpen && !explanation) {
+      generateExplanation();
+    }
+  }, [isOpen, explanation, generateExplanation]);
 
   const formatMarkdown = (text: string) => {
     // Simple markdown formatting for better display

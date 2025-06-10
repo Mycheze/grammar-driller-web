@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/db';
 import { parseTSV } from '@/lib/utils/tsv';
+import { validateQuizContent, shouldSkipValidation } from '@/lib/utils/quiz-validation';
 import OpenAI from 'openai';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -111,21 +112,41 @@ export async function POST(request: NextRequest) {
       throw new Error('No valid questions found in AI-generated content');
     }
 
-    console.log(`Got ${parsed.questions.length} questions, saving to database...`);
+    // NEW: Validate and improve the quiz content
+    let finalParsed = parsed;
+    if (!shouldSkipValidation()) {
+      console.log('Running quiz validation...');
+      try {
+        finalParsed = await validateQuizContent(parsed);
+        console.log('Quiz validation completed successfully');
+        
+        // Log any significant changes
+        if (finalParsed.questions.length !== parsed.questions.length) {
+          console.log(`Question count changed during validation: ${parsed.questions.length} → ${finalParsed.questions.length}`);
+        }
+      } catch (validationError) {
+        console.error('Validation failed, using original content:', validationError);
+        finalParsed = parsed; // Fall back to original if validation fails
+      }
+    } else {
+      console.log('Quiz validation skipped (SKIP_QUIZ_VALIDATION=true)');
+    }
 
-    // Create drill file record
+    console.log(`Final quiz has ${finalParsed.questions.length} questions, saving to database...`);
+
+    // Create drill file record (using the validated content)
     const drillFileData: NewDrillFile = {
       filename: `${target_language}_${grammar_concept.replace(/\s+/g, '_')}.tsv`,
-      target_language: parsed.metadata.target_language,
-      base_language: parsed.metadata.base_language,
-      title: parsed.metadata.title,
-      author: parsed.metadata.author,
-      difficulty: parsed.metadata.difficulty,
-      description: parsed.metadata.description,
-      grammar_concept: parsed.metadata.grammar_concept || grammar_concept,
-      version: parsed.metadata.version,
-      tags: parsed.metadata.tags,
-      question_count: parsed.questions.length,
+      target_language: finalParsed.metadata.target_language,
+      base_language: finalParsed.metadata.base_language,
+      title: finalParsed.metadata.title,
+      author: finalParsed.metadata.author,
+      difficulty: finalParsed.metadata.difficulty,
+      description: finalParsed.metadata.description,
+      grammar_concept: finalParsed.metadata.grammar_concept || grammar_concept,
+      version: finalParsed.metadata.version,
+      tags: finalParsed.metadata.tags,
+      question_count: finalParsed.questions.length,
       upvotes: 0,
       downvotes: 0,
     };
@@ -144,8 +165,8 @@ export async function POST(request: NextRequest) {
 
     console.log(`Drill file saved with ID: ${drillFile.id}`);
 
-    // Create questions data
-    const questionsData: NewQuestion[] = parsed.questions.map((question, index) => ({
+    // Create questions data (using validated questions)
+    const questionsData: NewQuestion[] = finalParsed.questions.map((question, index) => ({
       drill_file_id: drillFile.id,
       full_sentence: question.full_sentence,
       target_word: question.target_word,
@@ -174,12 +195,13 @@ export async function POST(request: NextRequest) {
 
     const totalDuration = Date.now() - startTime;
     console.log(`=== Generation Complete! Total time: ${totalDuration}ms ===`);
-    console.log(`Created drill "${drillFile.title}" with ${parsed.questions.length} questions`);
+    console.log(`Created drill "${drillFile.title}" with ${finalParsed.questions.length} questions`);
 
     return NextResponse.json({
       success: true,
       drillFile: drillFile,
-      questionCount: parsed.questions.length,
+      questionCount: finalParsed.questions.length,
+      validated: !shouldSkipValidation(),
     });
 
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { DrillFile, Question } from '@/lib/db/types';
@@ -27,18 +27,7 @@ export default function DrillDetailsPage() {
 
   const drillId = params.id as string;
 
-  // Fix hydration by only rendering after mount
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (drillId && mounted) {
-      fetchDrillDetails();
-    }
-  }, [drillId, mounted]);
-
-  const fetchDrillDetails = async () => {
+  const fetchDrillDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -71,7 +60,18 @@ export default function DrillDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [drillId]);
+
+  // Fix hydration by only rendering after mount
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (drillId && mounted) {
+      fetchDrillDetails();
+    }
+  }, [drillId, mounted, fetchDrillDetails]);
 
   const handleEdit = () => {
     if (drillFile && questions) {
@@ -163,6 +163,16 @@ export default function DrillDetailsPage() {
     });
   };
 
+  const getDifficultyClass = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner': return 'difficulty-beginner';
+      case 'Intermediate': return 'difficulty-intermediate';
+      case 'Advanced': return 'difficulty-advanced';
+      case 'Expert': return 'difficulty-expert';
+      default: return 'difficulty-intermediate';
+    }
+  };
+
   // Fix hydration: avoid dangerouslySetInnerHTML, use simple highlighting instead
   const HighlightedSentence = ({ sentence, targetWord }: { sentence: string; targetWord: string }) => {
     if (!mounted) return <span>{sentence}</span>; // Prevent hydration mismatch
@@ -193,159 +203,169 @@ export default function DrillDetailsPage() {
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="text-lg">Loading drill details...</div>
+      <div className="text-center py-16">
+        <div className="loading-spinner mx-auto mb-4"></div>
+        <div className="text-lg loading-pulse">Loading drill details...</div>
       </div>
     );
   }
 
   if (error || !drillFile) {
     return (
-      <div className="text-center py-8">
-        <div className="text-destructive mb-4">Error: {error}</div>
-        <div className="space-x-4">
-          <button
-            onClick={fetchDrillDetails}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
-          >
-            Try Again
-          </button>
-          <Link
-            href="/drills"
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
-          >
-            Back to Drills
-          </Link>
+      <div className="text-center py-16">
+        <div className="enhanced-card max-w-md mx-auto">
+          <div className="text-destructive mb-4 text-lg font-medium">⚠️ Error</div>
+          <p className="text-muted-foreground mb-6">{error}</p>
+          <div className="space-y-3">
+            <button
+              onClick={fetchDrillDetails}
+              className="btn-primary w-full"
+            >
+              Try Again
+            </button>
+            <Link
+              href="/drills"
+              className="btn-secondary block text-center w-full"
+            >
+              Back to Drills
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-2">{drillFile.title}</h1>
-        <p className="text-muted-foreground mb-4">Drill File Details</p>
+      <div className="space-y-4">
+        <h1 className="text-4xl font-bold gradient-text">{drillFile.title}</h1>
+        <p className="text-xl text-muted-foreground">Drill File Details</p>
         
-        {/* Action buttons - ONLY CHANGE: Added delete button */}
-        <div className="flex flex-wrap gap-2">
+        {/* Action buttons */}
+        <div className="flex flex-wrap gap-3">
           <Link
             href={`/quiz/${drillFile.id}`}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+            className="btn-primary"
           >
-            Start Quiz
+            🚀 Start Quiz
           </Link>
           <button
             onClick={handleEdit}
-            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+            className="btn-secondary"
           >
-            Edit TSV
+            📝 Edit TSV
           </button>
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 disabled:opacity-50"
+            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 disabled:opacity-50 transition-all duration-300"
           >
-            {deleting ? 'Deleting...' : 'Delete'}
+            {deleting ? '🗑️ Deleting...' : '🗑️ Delete'}
           </button>
           <Link
             href="/drills"
-            className="px-4 py-2 border border-border rounded-md hover:bg-muted/50"
+            className="btn-secondary"
           >
-            Back to Drills
+            ← Back to Drills
           </Link>
         </div>
       </div>
 
       {/* Metadata Card */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">File Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-3">
+      <div className="enhanced-card">
+        <h2 className="text-2xl font-semibold mb-6 flex items-center">
+          📋 File Information
+          <div className="ml-2 w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-4">
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Filename</dt>
-              <dd className="text-sm font-mono bg-muted px-2 py-1 rounded truncate">
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Filename</dt>
+              <dd className="text-sm font-mono bg-muted/50 px-3 py-2 rounded-lg border">
                 {drillFile.filename}
               </dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Target Language</dt>
-              <dd className="text-sm">{drillFile.target_language}</dd>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Target Language</dt>
+              <dd><span className="tag">{drillFile.target_language}</span></dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Base Language</dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Base Language</dt>
               <dd className="text-sm">{drillFile.base_language}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Author</dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Author</dt>
               <dd className="text-sm">{drillFile.author}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Difficulty</dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Difficulty</dt>
               <dd>
-                <span className="px-2 py-1 bg-secondary text-secondary-foreground text-xs rounded">
+                <span className={getDifficultyClass(drillFile.difficulty)}>
                   {drillFile.difficulty}
                 </span>
               </dd>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Grammar Concept</dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Grammar Concept</dt>
               <dd className="text-sm">{drillFile.grammar_concept}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Version</dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Version</dt>
               <dd className="text-sm">{drillFile.version}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Question Count</dt>
-              <dd className="text-sm">{drillFile.question_count}</dd>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Question Count</dt>
+              <dd className="text-sm font-semibold text-primary">{drillFile.question_count}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Created</dt>
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Created</dt>
               <dd className="text-sm">{formatDate(drillFile.created_at)}</dd>
             </div>
             <div>
-              <dt className="text-sm font-medium text-muted-foreground">Tags</dt>
-              <dd className="text-sm">
+              <dt className="text-sm font-medium text-muted-foreground mb-1">Tags</dt>
+              <dd>
                 {drillFile.tags ? (
                   <div className="flex flex-wrap gap-1 mt-1">
                     {drillFile.tags.split(',').map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-primary/10 text-primary text-xs rounded"
-                      >
+                      <span key={index} className="tag">
                         {tag.trim()}
                       </span>
                     ))}
                   </div>
                 ) : (
-                  <span className="text-muted-foreground">No tags</span>
+                  <span className="text-muted-foreground text-sm">No tags</span>
                 )}
               </dd>
             </div>
           </div>
         </div>
-        <div className="mt-4">
+        <div className="mt-6">
           <dt className="text-sm font-medium text-muted-foreground mb-2">Description</dt>
-          <dd className="text-sm bg-muted p-3 rounded">
+          <dd className="text-sm bg-muted/50 p-4 rounded-lg border">
             {drillFile.description}
           </dd>
         </div>
       </div>
 
       {/* Questions Preview */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Questions Preview</h2>
+      <div className="enhanced-card">
+        <h2 className="text-2xl font-semibold mb-6 flex items-center">
+          🔍 Questions Preview
+          <div className="ml-2 w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+        </h2>
         {questions.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            No questions found for this drill file.
+          <div className="text-center py-12">
+            <div className="text-4xl mb-4">📝</div>
+            <div className="text-muted-foreground">
+              No questions found for this drill file.
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
+            <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left py-3 px-2 text-sm font-medium text-muted-foreground w-12">
@@ -378,7 +398,7 @@ export default function DrillDetailsPage() {
                       />
                     </td>
                     <td className="py-3 px-2">
-                      <code className="bg-muted px-2 py-1 rounded text-xs">
+                      <code className="bg-muted/50 px-2 py-1 rounded text-xs border">
                         {question.target_word}
                       </code>
                     </td>
@@ -395,41 +415,41 @@ export default function DrillDetailsPage() {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-background border border-border rounded-lg w-full max-w-6xl h-[90vh] flex flex-col">
-            <div className="flex justify-between items-center p-4 border-b border-border flex-shrink-0">
-              <h3 className="text-lg font-semibold">Edit TSV Content</h3>
+        <div className="modal-overlay fixed inset-0 flex items-center justify-center p-4 z-50">
+          <div className="modal-content w-full max-w-6xl h-[90vh] flex flex-col">
+            <div className="flex justify-between items-center p-6 border-b border-border flex-shrink-0">
+              <h3 className="text-xl font-semibold">📝 Edit TSV Content</h3>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="text-muted-foreground hover:text-foreground text-xl leading-none"
+                className="text-muted-foreground hover:text-foreground text-2xl leading-none transition-colors"
               >
                 ✕
               </button>
             </div>
             
-            <div className="flex-1 p-4 min-h-0">
+            <div className="flex-1 p-6 min-h-0">
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full h-full font-mono text-sm border border-border rounded p-3 resize-none focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full h-full font-mono text-sm rounded-lg p-4 resize-none focus:outline-none focus:ring-2 focus:ring-primary border border-border bg-background text-foreground"
                 placeholder="Edit the TSV content here..."
               />
             </div>
             
-            <div className="flex justify-end gap-2 p-4 border-t border-border flex-shrink-0">
+            <div className="flex justify-end gap-3 p-6 border-t border-border flex-shrink-0">
               <button
                 onClick={() => setShowEditModal(false)}
                 disabled={saving}
-                className="px-4 py-2 border border-border rounded-md hover:bg-muted/50 disabled:opacity-50"
+                className="btn-secondary"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
+                className="btn-primary"
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? '💾 Saving...' : '💾 Save Changes'}
               </button>
             </div>
           </div>
@@ -437,19 +457,21 @@ export default function DrillDetailsPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex justify-center gap-4 pt-4">
+      <div className="text-center space-y-4">
         <Link
           href={`/quiz/${drillFile.id}`}
-          className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 font-medium"
+          className="btn-primary text-lg px-8 py-4 animate-glow inline-block"
         >
-          Start Quiz with {drillFile.question_count} Questions
+          🎯 Start Quiz with {drillFile.question_count} Questions
         </Link>
-        <Link
-          href="/drills"
-          className="px-6 py-3 border border-border rounded-md hover:bg-muted/50 font-medium"
-        >
-          Back to All Drills
-        </Link>
+        <div>
+          <Link
+            href="/drills"
+            className="btn-secondary"
+          >
+            ← Back to All Drills
+          </Link>
+        </div>
       </div>
     </div>
   );
