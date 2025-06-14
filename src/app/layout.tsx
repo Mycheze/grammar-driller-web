@@ -54,7 +54,7 @@ export default function RootLayout({
                     
                     <div className="flex items-center space-x-3">
                       <ThemeToggle />
-                      <Link href="/"
+                      <Link href="https://coff.ee/benslanguagelab" target="_blank"
                         className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-sm font-medium text-white cursor-pointer hover:scale-110 transition-transform">
                         🧠
                       </Link>

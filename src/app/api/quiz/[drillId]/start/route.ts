@@ -1,6 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/db';
 
+function createBlankSentence(fullSentence: string, targetWord: string): string {
+  // Escape special regex characters in the target word
+  const escapedTarget = targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  // Use word boundaries to match whole words only
+  const regex = new RegExp(`\\b${escapedTarget}\\b`, 'i');
+  
+  // Try word boundary first
+  if (regex.test(fullSentence)) {
+    return fullSentence.replace(regex, '_____');
+  }
+  
+  // Fallback to simple replacement if no word boundary match
+  return fullSentence.replace(targetWord, '_____');
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ drillId: string }> }
@@ -53,7 +69,7 @@ export async function POST(
       questionIndex: index,
       fullSentence: q.full_sentence,
       targetWord: q.target_word,
-      blankSentence: q.full_sentence.replace(q.target_word, '_____'),
+      blankSentence: createBlankSentence(q.full_sentence, q.target_word),
       prompt: q.prompt,
       alternateAnswers: q.alternate_answers 
         ? q.alternate_answers.split(',').map((s: string) => s.trim()).filter(Boolean)

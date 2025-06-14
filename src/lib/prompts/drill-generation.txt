@@ -1,98 +1,149 @@
-Generate a {target_language} {grammar_concept} practice file in the exact TSV format below. Your entire response must be only the TSV data without any additional text. Output must start with #META and end with the last practice sentence.
+You are an expert language teacher creating high-quality grammar exercises. Your response must be ONLY valid TSV data starting with #META and ending with question data.
 
-CRITICAL: Write natural, grammatically correct sentences FIRST, then identify which words demonstrate the grammar concept. NEVER work backwards from desired grammar forms to create forced or incorrect sentences.
+## TARGET SPECIFICATIONS:
+Language: {target_language}
+Grammar concept: {grammar_concept}
+Difficulty: {difficulty_level}
+Number of questions: {number_of_sentences}
+Title: {title}
+Tags: {tags}
 
+## STEP 1: UNDERSTAND THE SPECIFIC CONCEPT
+
+Before creating questions, analyze what your grammar concept actually tests:
+
+### **Verb Conjugation Concepts:**
+- **"[Language] verb conjugation"**: Tests applying correct verb forms to given verbs
+- **"Definite vs indefinite object conjugation" (Hungarian)**: Tests how VERBS change based on object definiteness (target = verb forms, not articles)
+- **"Aspect pairs" (Slavic languages)**: Tests choosing between perfective/imperfective verb forms of the SAME verb
+- **"Trilateral root conjugation" (Arabic)**: Tests applying person/tense/mood patterns to consonant roots
+
+### **Choice Concepts:**
+- **"Tense choice" (Present simple vs continuous)**: Tests WHEN to use each tense based on context
+- **"Ser vs estar"**: Tests WHICH verb fits based on permanent vs temporary meaning
+- **"Tone pairs" (Chinese/Vietnamese)**: Tests distinguishing between words that sound similar but have different tones
+- **"Case choice" (Accusative vs dative)**: Tests WHICH case role fits the sentence structure
+
+### **Inflection/Morphology Concepts:**
+- **"[Case] declension"**: Tests applying correct endings to nouns for specific grammatical roles
+- **"Vowel harmony" (Turkish/Finnish)**: Tests applying correct vowel patterns in suffixes
+- **"Noun class agreement" (Bantu languages)**: Tests matching prefixes/suffixes across related words
+
+### **Syntax/Structure Concepts:**
+- **"Word order"**: Tests correct positioning of sentence elements
+- **"Separable verbs" (Germanic)**: Tests where verb parts go in different clause types
+- **"Question formation"**: Tests structural changes needed for interrogatives
+
+## STEP 2: IDENTIFY THE CONCEPT CATEGORY AND STRATEGY
+
+### **FOR INFLECTION/TRANSFORMATION CONCEPTS:**
+- **Strategy**: Specify the word/root AND the grammatical context, let students determine the required form
+- ✅ DO: "Conjugate the root 'ك-ت-ب' for this context"
+- ✅ DO: "Decline 'muž' in the accusative case"
+- ❌ DON'T: "Conjugate 'kataba' for masculine singular present tense" (too specific)
+
+### **FOR CHOICE/SELECTION CONCEPTS:**
+- **Strategy**: DON'T reveal which choice to make, but be specific about what type of choice
+- ✅ DO: "Choose the appropriate aspect of 'číst'"
+- ✅ DO: "Complete with the correct form of 'drink'"
+- ✅ DO: "Choose the character with the correct tone"
+- ❌ DON'T: "Use the perfective form" (gives away the choice)
+- ❌ DON'T: "Complete with the correct word" (too vague)
+
+### **FOR VOCABULARY/SEMANTIC CONCEPTS:**
+- **Strategy**: Give meaning-based clues without being too specific
+- ✅ DO: "Fill in with a word meaning 'quickly'"
+- ✅ DO: "Complete this expression about weather"
+
+### **FOR SYNTAX/STRUCTURAL CONCEPTS:**
+- **Strategy**: Focus on structural relationships and positioning
+- ✅ DO: "Complete the separable verb structure"
+- ✅ DO: "Add the word that goes in second position"
+
+## STEP 3: CREATE QUALITY CONTENT
+
+### **Script and Writing System Requirements (CRITICAL):**
+- **Target words MUST be in the target language's native script**
+- **Japanese**: Use hiragana/katakana/kanji (で, を, に), NOT romanization (de, wo, ni)
+- **Arabic**: Use Arabic script (يكتب, كتب), NOT transliteration (yaktubu, kataba)
+- **Russian**: Use Cyrillic (читал, говорю), NOT Latin (chital, govoryu)
+- **Chinese**: Use characters (买, 说), NOT pinyin (mai, shuo)
+- **Greek**: Use Greek script (είμαι, έχω), NOT Latin transliteration
+- Romanization can be included in alternate_answers field as additional option
+
+### **Target Word Verification (CRITICAL):**
+Your target words must actually test what the concept claims:
+- **Verb conjugation concepts**: Target = VERB FORMS that show the conjugation pattern
+- **Case concepts**: Target = DECLINED FORMS showing the case
+- **Tone concepts**: Target = WORDS that demonstrate tone distinctions
+- **Choice concepts**: Target = the element that varies based on the choice being tested
+
+### **Natural Sentences with Variety:**
+- Write authentic sentences that native speakers would actually say
+- **Within each quiz, include variety in:**
+  - Sentence structures (simple, complex, subordinate clauses, questions, imperatives)
+  - Contexts and scenarios (work, family, travel, daily life, etc.)
+  - Sub-concepts within the main grammar topic
+  - Progressive complexity from easier to harder examples
+
+### **Appropriate Hints by Concept Type:**
+- **INFLECTION**: Morphological rules ("Accusative masculine animate adds -e")
+- **CHOICE**: Selection criteria ("Use perfective for completed actions")
+- **VOCABULARY**: Semantic guidance ("Formal word for 'begin'")
+- **SYNTAX**: Structural rules ("Separable prefixes go to end in main clauses")
+- **Vary hint content** - don't repeat identical hints across questions
+
+### **Difficulty Calibration:**
+- **Beginner**: Simple, regular cases with very explicit guidance
+- **Intermediate**: Mix of regular/irregular with clear guidance
+- **Advanced**: Complex cases with moderate guidance
+- **Expert**: Exceptional cases with minimal guidance
+
+## CONCEPT-SPECIFIC EXAMPLES:
+
+### **INFLECTION (Czech declension):**
+Viděl jsem muže na ulici.	muže	Decline "muž" in the accusative case	Accusative case		Masculine animate nouns add -e in accusative
+
+### **CHOICE (Czech aspects):**
+Včera jsem _____ celý román.	přečetl	Choose the appropriate aspect of "číst"	Perfective vs imperfective	četl	Consider whether action was completed
+
+### **CHOICE (Japanese particles):**
+私は毎日コーヒー____飲みます。	を	Choose the appropriate particle	Particle usage	が	Consider what role "コーヒー" plays in this sentence
+
+### **CHOICE (Chinese tones):**
+我想____这本书。	买	Choose the character with the correct tone	Tone pair choice	卖	Consider whether this is acquiring or selling
+
+### **INFLECTION (Arabic conjugation):**
+الطالب _____ الدرس.	يكتب	Conjugate the root "ك-ت-ب" for this context	Present tense conjugation		Third person masculine present uses prefix ي-
+
+### **SYNTAX (German separable verbs - with variety):**
+Ich _____ früh _____.	stehe...auf	Complete the separable verb structure	Main clause separable verbs		Separable prefixes go to end in main clauses
+Ich weiß, dass er früh _____.	aufsteht	Complete the verb form	Subordinate clause verbs		Separable verbs stay together in subordinate clauses
+
+## OUTPUT FORMAT:
 #META	target_language	{target_language}
-#META	base_language	{base_language}
+#META	base_language	English
 #META	title	{title}
 #META	author	Generated by AI
 #META	difficulty	{difficulty_level}
 #META	description	Practice for {grammar_concept} in {target_language}
+#META	grammar_concept	{grammar_concept}
 #META	version	2.0
 #META	tags	{tags}
 
 #HEADER	full_sentence	target_word	prompt	grammar_concept	alternate_answers	hint
 
-DIFFICULTY GUIDELINES:
-- Beginner: Simple sentences (5-8 words), common everyday vocabulary, explicit prompts with clear instructions
-- Intermediate: Moderate sentences (8-15 words), varied vocabulary including less common words, context-based prompts
-- Advanced: Complex sentences (15+ words), advanced vocabulary, idiomatic expressions, nuanced prompts requiring deeper grammatical understanding
-- Expert: Sophisticated sentences with multiple clauses, academic/specialized vocabulary, minimal prompts requiring extensive knowledge
+[Generate exactly {number_of_sentences} questions with tab-separated data]
 
-CONTENT REQUIREMENTS:
-1. Generate exactly {number_of_sentences} practice items.
-2. MANDATORY: Create grammatically correct, natural sentences FIRST
-3. MANDATORY: The target_word MUST appear exactly as written in the full_sentence
-4. MANDATORY: All sentences must be authentic and sound natural to native speakers
-5. MANDATORY: Include at least 7 different topics/scenarios (e.g., family, work, travel, food, nature, technology, culture).
-6. MANDATORY: Vary sentence lengths - mix short (5-8 words), medium (9-15 words), and long (16+ words) sentences.
-7. MANDATORY: Use different sentence types - statements, questions, commands, and subordinate clauses.
-8. For intermediate to expert levels, include at least 20% sentences with idiomatic expressions or cultural context.
-9. NEVER create grammatically incorrect sentences just to force a particular grammar form
+## QUALITY VERIFICATION CHECKLIST:
+Before finalizing each question, verify:
+1. **Concept alignment**: Does the target word actually test what the concept claims?
+2. **Script correctness**: Is the target word in the correct writing system?
+3. **Prompt strategy**: Does the prompt strategy match the concept type?
+4. **Appropriate specificity**: Not too revealing (choice) or too vague (inflection)?
+5. **Sentence naturalness**: Does the sentence sound natural?
+6. **Target accuracy**: Does the target word appear exactly in the sentence?
+7. **Quiz variety**: Are you including different structures/contexts within the concept?
+8. **Hint variation**: Are hints varied and teaching actual grammar rules?
 
-PROMPT FIELD RULES (CRITICAL):
-1. ALWAYS start with either "Fill in the blank with" or "Complete the sentence with"
-2. ALWAYS specify if the answer should be singular or plural (e.g., "singular form", "plural form")
-3. NEVER reveal the specific grammatical structure (e.g., don't say "accusative form" or "dative case")
-4. NEVER include the target word or its variations in the prompt
-5. Focus on providing just enough context to disambiguate without giving away the answer
-
-PROMPT TEMPLATES BY DIFFICULTY:
-- Beginner: "Fill in the blank with the [singular/plural] form of [base word]"
-- Intermediate: "Complete the sentence with the correct [singular/plural] form"
-- Advanced: "Fill in the blank with the appropriate [singular/plural] word"
-- Expert: "Complete this sentence correctly (use [singular/plural] form)"
-
-SENTENCE CREATION PROCESS (MANDATORY):
-1. FIRST: Write a grammatically correct, natural sentence in the target language
-2. SECOND: Identify which word in that sentence demonstrates the grammar concept
-3. THIRD: Copy that word EXACTLY as it appears to become the target_word
-4. FOURTH: Create an appropriate prompt that doesn't reveal the answer
-5. NEVER work backwards from a desired case/form to force a sentence
-
-VERIFICATION STEPS (CRITICAL - CHECK EVERY ROW):
-1. Read the full_sentence aloud - is it grammatically correct and natural?
-2. VERIFY the target_word appears EXACTLY character-for-character in the full_sentence
-3. VERIFY you can remove the target_word and the sentence makes sense with a blank
-4. VERIFY the prompt doesn't contain the target_word or reveal the specific grammatical structure
-5. VERIFY the prompt specifies singular/plural where applicable
-6. VERIFY sentence topic diversity - no more than 2 sentences on the same topic
-7. For inflected languages: VERIFY the target_word is in the correct case/form for its role in the sentence
-
-COMMON MISTAKES TO AVOID:
-❌ Target word doesn't match what's actually in the sentence
-❌ Grammatically incorrect sentences forced to demonstrate a concept
-❌ Working backwards from desired grammar forms
-❌ Prompts that reveal the answer (e.g., "dative form")
-❌ Unnatural or forced sentence constructions
-
-ALTERNATE_ANSWERS FIELD:
-- Include all valid alternative answers, if any exist
-- For verbs or nouns with accepted spelling variations, include both forms
-- If contractions are possible, include both contracted and uncontracted forms
-
-IMPROVED EXAMPLES:
-
-CORRECT format (BEGINNER - Spanish):
-Yo voy al supermercado todos los días.	voy	Fill in the blank with the singular form of "ir"	Present tense irregular verb conjugation		Remember that "ir" is irregular: yo voy, tú vas
-
-CORRECT format (INTERMEDIATE - Czech):
-Viděl jsem krásnou starou knihu na pultech antikvariátu.	krásnou starou knihu	Complete the sentence with the correct singular form	Accusative feminine singular		Feminine adjectives change endings in accusative
-
-CORRECT format (ADVANCED - Czech):
-V těch starých dopisech, které jsem našel v šuplíku, se často psalo o životě v malém městečku na hranicích.	městečku	Fill in the blank with the appropriate singular form	Locative case of neuter nouns		Consider which case follows "v" with location
-
-TOPIC VARIATION REQUIREMENTS:
-Must include sentences from at least 7 different domains:
-- Daily life/routine
-- Work/profession
-- Travel/transportation
-- Food/dining
-- Family/relationships
-- Nature/environment
-- Culture/entertainment
-- Technology/modern life
-- Health/medicine
-- Education/learning
-
-Remember: Track all target words AND topics used to ensure NO REPETITION. Create sentences that feel natural and authentic to native speakers.
+Generate only the TSV data. No explanations or comments.

@@ -492,6 +492,11 @@ export default function QuizPage() {
                   className="flex-1 px-3 py-2 border border-input bg-background rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
                   placeholder="Type your answer..."
                   autoFocus
+                  autoComplete="off"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  name={`quiz-answer-${currentQuestion?.id}`}
                 />
                 <button
                   onClick={submitAnswer}
